@@ -1,0 +1,102 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+@model Employee_Attendance_Tracker.Models.ViewModels.EmployeeViewModel
+
+@{
+    ViewData["Title"] = "Create Employee";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user-plus"></i> Add New Employee</h2>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0"><i class="fas fa-user"></i> Employee Information</h4>
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="Create" method="post">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Note:</strong> Employee code will be automatically generated upon creation.
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="FullName" class="form-label">
+                                        <i class="fas fa-user text-primary"></i> Full Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="FullName" class="form-control" placeholder="Enter full name (4 names required)" />
+                                    <span asp-validation-for="FullName" class="text-danger"></span>
+                                    <div class="form-text">Must contain exactly 4 names, each at least 2 characters (e.g., "Ahmed Mohamed Ali Hassan")</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label">
+                                        <i class="fas fa-envelope text-primary"></i> Email Address <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="Email" class="form-control" placeholder="employee@company.com" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                    <div class="form-text">Must be a valid and unique email address</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="DepartmentId" class="form-label">
+                                        <i class="fas fa-building text-primary"></i> Department <span class="text-danger">*</span>
+                                    </label>
+                                    <select asp-for="DepartmentId" asp-items="Model.Departments" class="form-select">
+                                        <option value="">-- Select Department --</option>
+                                    </select>
+                                    <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                                    <div class="form-text">Choose the department this employee belongs to</div>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Create Employee
+                                    </button>
+                                    <a asp-action="Index" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Real-time validation feedback for full name
+        document.getElementById('FullName').addEventListener('input', function(e) {
+            const value = e.target.value.trim();
+            const names = value.split(' ').filter(name => name.length >= 2);
+            const feedback = document.querySelector('.form-text');
+
+            if (names.length === 4) {
+                feedback.className = 'form-text text-success';
+                feedback.innerHTML = '<i class="fas fa-check"></i> Valid full name format';
+            } else {
+                feedback.className = 'form-text text-muted';
+                feedback.innerHTML = 'Must contain exactly 4 names, each at least 2 characters (e.g., "Ahmed Mohamed Ali Hassan")';
+            }
+        });
+    </script>
+}
