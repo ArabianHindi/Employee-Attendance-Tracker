@@ -128,7 +128,7 @@ namespace Employee_Attendance_Tracker.Controllers
                 {
                     Id = viewModel.Id,
                     Name = viewModel.Name,
-                    Code = viewModel.Code.ToUpper(), // Ensure uppercase
+                    Code = viewModel.Code.ToUpper(),
                     Location = viewModel.Location
                 };
 
