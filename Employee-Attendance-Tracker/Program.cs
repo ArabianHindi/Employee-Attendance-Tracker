@@ -21,7 +21,7 @@ namespace Employee_Attendance_Tracker
             // Register services
             builder.Services.AddScoped<IDepartmentService, DepartmentService>();
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-            //builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+            builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 
             var app = builder.Build();
 
