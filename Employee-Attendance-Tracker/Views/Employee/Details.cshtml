@@ -1,157 +1,31 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-
-@model Employee_Attendance_Tracker.Models.ViewModels.EmployeeViewModel
+﻿@model Employee_Attendance_Tracker.Models.ViewModels.EmployeeViewModel
 
 @{
     ViewData["Title"] = "Employee Details";
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-user"></i> Employee Details</h2>
-                <div>
-                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
-                        <i class="fas fa-edit"></i> Edit
-                    </a>
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to List
-                    </a>
-                </div>
-            </div>
+<h2>@ViewData["Title"]</h2>
 
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="card shadow">
-                        <div class="card-header bg-primary text-white">
-                            <h4 class="mb-0">
-                                <span class="badge bg-light text-dark me-2">@Model.EmployeeCode</span>
-                                @Model.FullName
-                            </h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h5><i class="fas fa-info-circle text-primary"></i> Personal Information</h5>
-                                    <table class="table table-borderless">
-                                        <tr>
-                                            <td><strong>Employee Code:</strong></td>
-                                            <td><span class="badge bg-dark">@Model.EmployeeCode</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Full Name:</strong></td>
-                                            <td>@Model.FullName</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Email:</strong></td>
-                                            <td><i class="fas fa-envelope text-muted"></i> @Model.Email</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Department:</strong></td>
-                                            <td><span class="badge bg-primary">@Model.DepartmentName</span></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div class="col-md-6">
-                                    <h5><i class="fas fa-chart-line text-success"></i> Attendance Summary (This Month)</h5>
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <div class="card bg-success text-white text-center">
-                                                <div class="card-body p-2">
-                                                    <h4 class="mb-0">@Model.PresentDays</h4>
-                                                    <small>Present</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="card bg-danger text-white text-center">
-                                                <div class="card-body p-2">
-                                                    <h4 class="mb-0">@Model.AbsentDays</h4>
-                                                    <small>Absent</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="card bg-info text-white text-center">
-                                                <div class="card-body p-2">
-                                                    <h4 class="mb-0">@Model.AttendancePercentage%</h4>
-                                                    <small>Rate</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <div class="btn-group" role="group">
-                                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
-                                    <i class="fas fa-edit"></i> Edit Employee
-                                </a>
-                                <a asp-controller="Attendance" asp-action="Index" asp-route-employeeId="@Model.Id" class="btn btn-success">
-                                    <i class="fas fa-calendar-check"></i> View Attendance
-                                </a>
-                                <a asp-controller="Attendance" asp-action="Create" asp-route-employeeId="@Model.Id" class="btn btn-info">
-                                    <i class="fas fa-plus"></i> Mark Attendance
-                                </a>
-                                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
-                                    <i class="fas fa-trash"></i> Delete Employee
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card shadow">
-                        <div class="card-header bg-info text-white">
-                            <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Attendance Overview</h5>
-                        </div>
-                        <div class="card-body">
-                            @{
-                                var totalDays = Model.PresentDays + Model.AbsentDays;
-                                var presentPercent = totalDays > 0 ? (Model.PresentDays * 100 / totalDays) : 0;
-                                var absentPercent = totalDays > 0 ? (Model.AbsentDays * 100 / totalDays) : 0;
-                            }
-
-                            @if (totalDays > 0)
-                            {
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Present Days</span>
-                                        <span>@Model.PresentDays/@totalDays</span>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar bg-success" style="width: @presentPercent%"></div>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Absent Days</span>
-                                        <span>@Model.AbsentDays/@totalDays</span>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar bg-danger" style="width: @absentPercent%"></div>
-                                    </div>
-                                </div>
-                                <div class="text-center">
-                                    <h3 class="text-primary">@Model.AttendancePercentage%</h3>
-                                    <p class="text-muted mb-0">Overall Attendance Rate</p>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="text-center text-muted">
-                                    <i class="fas fa-calendar-times fa-2x mb-2"></i>
-                                    <p>No attendance records found for this month.</p>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="mb-3">
+    <strong>Code:</strong> @Model.EmployeeCode
 </div>
+<div class="mb-3">
+    <strong>Full Name:</strong> @Model.FullName
+</div>
+<div class="mb-3">
+    <strong>Email:</strong> @Model.Email
+</div>
+<div class="mb-3">
+    <strong>Department:</strong> @Model.DepartmentName
+</div>
+<div class="mb-3">
+    <strong>Present Days:</strong> @Model.Presents
+</div>
+<div class="mb-3">
+    <strong>Absent Days:</strong> @Model.Absents
+</div>
+<div class="mb-3">
+    <strong>Attendance %:</strong> @Model.AttendancePercentage%
+</div>
+
+<a asp-action="Index" class="btn btn-secondary">Back</a>

@@ -1,130 +1,40 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-
-@model Employee_Attendance_Tracker.Models.ViewModels.EmployeeViewModel
+﻿@model Employee_Attendance_Tracker.Models.EmployeeDTO
 
 @{
     ViewData["Title"] = "Edit Employee";
 }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-user-edit"></i> Edit Employee</h2>
-                <div>
-                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info">
-                        <i class="fas fa-eye"></i> View Details
-                    </a>
-                    <a asp-action="Index" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to List
-                    </a>
-                </div>
-            </div>
+<h2>@ViewData["Title"]</h2>
 
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card shadow">
-                        <div class="card-header bg-warning text-dark">
-                            <h4 class="mb-0">
-                                <i class="fas fa-user"></i>
-                                Editing: <span class="badge bg-dark">@Model.EmployeeCode</span> @Model.FullName
-                            </h4>
-                        </div>
-                        <div class="card-body">
-                            <form asp-action="Edit" method="post">
-                                <input asp-for="Id" type="hidden" />
-                                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
 
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <strong>Note:</strong> Employee code <span class="badge bg-dark">@Model.EmployeeCode</span> cannot be changed.
-                                </div>
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        <i class="fas fa-id-badge text-muted"></i> Employee Code
-                                    </label>
-                                    <input type="text" class="form-control" value="@Model.EmployeeCode" readonly />
-                                    <div class="form-text">Employee code is system-generated and cannot be modified</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="FullName" class="form-label">
-                                        <i class="fas fa-user text-primary"></i> Full Name <span class="text-danger">*</span>
-                                    </label>
-                                    <input asp-for="FullName" class="form-control" />
-                                    <span asp-validation-for="FullName" class="text-danger"></span>
-                                    <div class="form-text">Must contain exactly 4 names, each at least 2 characters</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="Email" class="form-label">
-                                        <i class="fas fa-envelope text-primary"></i> Email Address <span class="text-danger">*</span>
-                                    </label>
-                                    <input asp-for="Email" class="form-control" />
-                                    <span asp-validation-for="Email" class="text-danger"></span>
-                                    <div class="form-text">Must be a valid and unique email address</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="DepartmentId" class="form-label">
-                                        <i class="fas fa-building text-primary"></i> Department <span class="text-danger">*</span>
-                                    </label>
-                                    <select asp-for="DepartmentId" asp-items="Model.Departments" class="form-select">
-                                        <option value="">-- Select Department --</option>
-                                    </select>
-                                    <span asp-validation-for="DepartmentId" class="text-danger"></span>
-                                    <div class="form-text">Choose the department this employee belongs to</div>
-                                </div>
-
-                                <div class="alert alert-info">
-                                    <i class="fas fa-info-circle"></i>
-                                    <strong>Current Attendance Summary:</strong>
-                                    <span class="badge bg-success">Present: @Model.PresentDays</span>
-                                    <span class="badge bg-danger">Absent: @Model.AbsentDays</span>
-                                    <span class="badge bg-info">Rate: @Model.AttendancePercentage%</span>
-                                </div>
-
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <button type="submit" class="btn btn-warning">
-                                        <i class="fas fa-save"></i> Update Employee
-                                    </button>
-                                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info">
-                                        <i class="fas fa-eye"></i> View Details
-                                    </a>
-                                    <a asp-action="Index" class="btn btn-secondary">
-                                        <i class="fas fa-times"></i> Cancel
-                                    </a>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
     </div>
-</div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DepartmentId" class="form-label">Department</label>
+        <select asp-for="DepartmentId" class="form-control" asp-items="ViewBag.Departments"></select>
+        <span asp-validation-for="DepartmentId" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script>
-        // Real-time validation feedback for full name
-        document.getElementById('FullName').addEventListener('input', function(e) {
-            const value = e.target.value.trim();
-            const names = value.split(' ').filter(name => name.length >= 2);
-            const feedback = document.querySelector('[asp-validation-for="FullName"]').nextElementSibling;
-
-            if (names.length === 4) {
-                feedback.className = 'form-text text-success';
-                feedback.innerHTML = '<i class="fas fa-check"></i> Valid full name format';
-            } else {
-                feedback.className = 'form-text text-muted';
-                feedback.innerHTML = 'Must contain exactly 4 names, each at least 2 characters';
-            }
-        });
-    </script>
 }

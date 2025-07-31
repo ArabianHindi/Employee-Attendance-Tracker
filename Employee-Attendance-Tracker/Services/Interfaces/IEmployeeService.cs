@@ -1,16 +1,15 @@
-﻿using Employee_Attendance_Tracker.Models.Entities;
+﻿using Employee_Attendance_Tracker.Models;
+using Employee_Attendance_Tracker.Models.Entities;
+using Employee_Attendance_Tracker.Models.ViewModels;
 
 namespace Employee_Attendance_Tracker.Services.Interfaces
 {
     public interface IEmployeeService
     {
-        Task<IEnumerable<Employee>> GetAllEmployeesAsync();
-        Task<Employee> GetEmployeeByIdAsync(int id);
-        Task<bool> CreateEmployeeAsync(Employee employee);
-        Task<bool> UpdateEmployeeAsync(Employee employee);
-        Task<bool> DeleteEmployeeAsync(int id);
-        Task<bool> IsEmailUniqueAsync(string email, int? excludeId = null);
-        Task<int> GenerateEmployeeCodeAsync();
-        Task<(int Present, int Absent, decimal Percentage)> GetCurrentMonthAttendanceSummaryAsync(int employeeId);
+        Task<List<EmployeeViewModel>> GetAllAsync();
+        Task<EmployeeViewModel> GetByIdAsync(int id);
+        Task AddAsync(EmployeeDTO employeeDto);
+        Task UpdateAsync(int id, EmployeeDTO employeeDto);
+        Task DeleteAsync(int id);
     }
 }

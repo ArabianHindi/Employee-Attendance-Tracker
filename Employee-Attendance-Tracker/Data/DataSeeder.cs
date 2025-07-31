@@ -58,56 +58,56 @@ namespace Employee_Attendance_Tracker.Data
             {
                 new Employee
                 {
-                    EmployeeCode = 1001,
+                    EmployeeCode = 1,
                     FullName = "Ahmed Mohamed Ali Hassan",
                     Email = "ahmed.hassan@company.com",
                     DepartmentId = departments.First(d => d.Code == "TECH").Id
                 },
                 new Employee
                 {
-                    EmployeeCode = 1002,
+                    EmployeeCode = 2,
                     FullName = "Fatma Mahmoud Ibrahim Salem",
                     Email = "fatma.salem@company.com",
                     DepartmentId = departments.First(d => d.Code == "HRMG").Id
                 },
                 new Employee
                 {
-                    EmployeeCode = 1003,
+                    EmployeeCode = 3,
                     FullName = "Mohamed Khaled Ahmed Fouad",
                     Email = "mohamed.fouad@company.com",
                     DepartmentId = departments.First(d => d.Code == "TECH").Id
                 },
                 new Employee
                 {
-                    EmployeeCode = 1004,
+                    EmployeeCode = 4,
                     FullName = "Noha Essam Mohamed Rashad",
                     Email = "noha.rashad@company.com",
                     DepartmentId = departments.First(d => d.Code == "FINC").Id
                 },
                 new Employee
                 {
-                    EmployeeCode = 1005,
+                    EmployeeCode = 5,
                     FullName = "Omar Yasser Ali Mansour",
                     Email = "omar.mansour@company.com",
                     DepartmentId = departments.First(d => d.Code == "MKTG").Id
                 },
                 new Employee
                 {
-                    EmployeeCode = 1006,
+                    EmployeeCode = 6,
                     FullName = "Sara Ahmed Mostafa Saleh",
                     Email = "sara.saleh@company.com",
                     DepartmentId = departments.First(d => d.Code == "OPER").Id
                 },
                 new Employee
                 {
-                    EmployeeCode = 1007,
+                    EmployeeCode = 7,
                     FullName = "Karim Hassan Mohamed Zaki",
                     Email = "karim.zaki@company.com",
                     DepartmentId = departments.First(d => d.Code == "TECH").Id
                 },
                 new Employee
                 {
-                    EmployeeCode = 1008,
+                    EmployeeCode = 8,
                     FullName = "Mona Adel Ibrahim Farouk",
                     Email = "mona.farouk@company.com",
                     DepartmentId = departments.First(d => d.Code == "HRMG").Id

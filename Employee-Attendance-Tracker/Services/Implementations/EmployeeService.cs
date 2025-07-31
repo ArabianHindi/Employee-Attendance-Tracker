@@ -1,5 +1,7 @@
 ﻿using Employee_Attendance_Tracker.Data;
+using Employee_Attendance_Tracker.Models;
 using Employee_Attendance_Tracker.Models.Entities;
+using Employee_Attendance_Tracker.Models.ViewModels;
 using Employee_Attendance_Tracker.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
@@ -15,191 +17,119 @@ namespace Employee_Attendance_Tracker.Services.Implementations
             _context = context;
         }
 
-        public async Task<bool> CreateEmployeeAsync(Employee employee)
+        private int GenerateEmployeeCode()
         {
-            try
-            {
-                // Validate business rules
-                if (await IsEmailUniqueAsync(employee.Email))
-                {
-                    return false; // Email already exists
-                }
-
-                // Validate full name format
-                if (!IsValidFullName(employee.FullName))
-                {
-                    return false; // Invalid name format
-                }
-
-                // Validate department exists
-                if (!await DepartmentExistsAsync(employee.DepartmentId))
-                {
-                    return false; // Department doesn't exist
-                }
-
-                // Generate unique employee code
-                employee.EmployeeCode = await GenerateEmployeeCodeAsync();
-
-                _context.Employees.Add(employee);
-                var result = await _context.SaveChangesAsync();
-                return result > 0;
-            }
-            catch
-            {
-                return false;
-            }
+            return _context.Employees.Any()
+                ? _context.Employees.Max(e => e.EmployeeCode) + 1
+                : 1000;
         }
 
-        public async Task<bool> DeleteEmployeeAsync(int id)
+        public async Task<List<EmployeeViewModel>> GetAllAsync()
         {
-            try
-            {
-                var employee = await _context.Employees
-                    .Include(e => e.Attendances)
-                    .FirstOrDefaultAsync(e => e.Id == id);
-
-                if (employee == null)
-                {
-                    return false;
-                }
-
-                // Note: Attendance records will be cascade deleted due to FK relationship
-                _context.Employees.Remove(employee);
-                var result = await _context.SaveChangesAsync();
-                return result > 0;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public async Task<int> GenerateEmployeeCodeAsync()
-        {
-            var maxCode = await _context.Employees
-                .MaxAsync(e => (int?)e.EmployeeCode) ?? 1000;
-
-            // Return next available code
-            return maxCode + 1;
-        }
-
-        public async Task<IEnumerable<Employee>> GetAllEmployeesAsync()
-        {
-            return await _context.Employees
+            var employees = await _context.Employees
                 .Include(e => e.Department)
                 .Include(e => e.Attendances)
-                .OrderBy(e => e.EmployeeCode)
                 .ToListAsync();
-        }
 
-        public async Task<(int Present, int Absent, decimal Percentage)> GetCurrentMonthAttendanceSummaryAsync(int employeeId)
-        {
-            try
+            var thisMonth = DateTime.Now.Month;
+            var thisYear = DateTime.Now.Year;
+
+            return employees.Select(e =>
             {
-                var currentDate = DateTime.Now;
-                var startOfMonth = new DateTime(currentDate.Year, currentDate.Month, 1);
-                var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+                var monthlyAttendances = e.Attendances?
+                    .Where(a => a.Date.Month == thisMonth && a.Date.Year == thisYear)
+                    .ToList();
 
-                var attendances = await _context.Attendances
-                    .Where(a => a.EmployeeId == employeeId &&
-                               a.Date >= startOfMonth &&
-                               a.Date <= endOfMonth)
-                    .ToListAsync();
+                var presents = monthlyAttendances?.Count(a => a.IsPresent) ?? 0;
+                var absents = monthlyAttendances?.Count(a => !a.IsPresent) ?? 0;
 
-                if (!attendances.Any())
+                return new EmployeeViewModel
                 {
-                    return (0, 0, 0);
-                }
-
-                var presentCount = attendances.Count(a => a.IsPresent);
-                var absentCount = attendances.Count(a => !a.IsPresent);
-                var totalDays = attendances.Count;
-
-                var percentage = totalDays > 0 ? Math.Round((decimal)presentCount / totalDays * 100, 2) : 0;
-
-                return (presentCount, absentCount, percentage);
-            }
-            catch
-            {
-                return (0, 0, 0);
-            }
+                    Id = e.Id,
+                    EmployeeCode = e.EmployeeCode,
+                    FullName = e.FullName,
+                    Email = e.Email,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department?.Name,
+                    Presents = presents,
+                    Absents = absents
+                };
+            }).ToList();
         }
 
-        public async Task<Employee> GetEmployeeByIdAsync(int id)
+        public async Task<EmployeeViewModel> GetByIdAsync(int id)
         {
-            return await _context.Employees
+            var employee = await _context.Employees
                 .Include(e => e.Department)
                 .Include(e => e.Attendances)
                 .FirstOrDefaultAsync(e => e.Id == id);
-        }
 
-        public async Task<bool> IsEmailUniqueAsync(string email, int? excludeId = null)
-        {
-            var query = _context.Employees.Where(e => e.Email.ToLower() == email.ToLower());
+            if (employee == null) return null;
 
-            if (excludeId.HasValue)
+            var thisMonth = DateTime.Now.Month;
+            var thisYear = DateTime.Now.Year;
+
+            var monthlyAttendances = employee.Attendances?
+                .Where(a => a.Date.Month == thisMonth && a.Date.Year == thisYear)
+                .ToList();
+
+            var presents = monthlyAttendances?.Count(a => a.IsPresent) ?? 0;
+            var absents = monthlyAttendances?.Count(a => !a.IsPresent) ?? 0;
+
+            return new EmployeeViewModel
             {
-                query = query.Where(e => e.Id != excludeId.Value);
-            }
-
-            return await query.AnyAsync();
+                Id = employee.Id,
+                EmployeeCode = employee.EmployeeCode,
+                FullName = employee.FullName,
+                Email = employee.Email,
+                DepartmentId = employee.DepartmentId,
+                DepartmentName = employee.Department?.Name,
+                Presents = presents,
+                Absents = absents
+            };
         }
 
-        public async Task<bool> UpdateEmployeeAsync(Employee employee)
+        public async Task AddAsync(EmployeeDTO dto)
         {
-            try
+            if (await _context.Employees.AnyAsync(e => e.Email == dto.Email))
+                throw new Exception("Email already exists.");
+
+            var employee = new Employee
             {
-                var existingEmployee = await _context.Employees.FindAsync(employee.Id);
-                if (existingEmployee == null)
-                {
-                    return false;
-                }
+                EmployeeCode = GenerateEmployeeCode(),
+                FullName = dto.FullName,
+                Email = dto.Email,
+                DepartmentId = dto.DepartmentId
+            };
 
-                // Validate business rules
-                if (await IsEmailUniqueAsync(employee.Email, employee.Id))
-                {
-                    return false; // Email already exists
-                }
-
-                // Validate full name format
-                if (!IsValidFullName(employee.FullName))
-                {
-                    return false; // Invalid name format
-                }
-
-                // Validate department exists
-                if (!await DepartmentExistsAsync(employee.DepartmentId))
-                {
-                    return false; // Department doesn't exist
-                }
-
-                // Update properties (Employee Code should not be updated)
-                existingEmployee.FullName = employee.FullName;
-                existingEmployee.Email = employee.Email;
-                existingEmployee.DepartmentId = employee.DepartmentId;
-
-                var result = await _context.SaveChangesAsync();
-                return result > 0;
-            }
-            catch
-            {
-                return false;
-            }
+            _context.Employees.Add(employee);
+            await _context.SaveChangesAsync();
         }
 
-        private bool IsValidFullName(string fullName)
+        public async Task UpdateAsync(int id, EmployeeDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(fullName))
-                return false;
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee == null)
+                throw new Exception("Employee not found.");
 
-            // Regex pattern: exactly 4 names, each at least 2 characters, letters and spaces only
-            var pattern = @"^([A-Za-z]{2,}\s){3}[A-Za-z]{2,}$";
-            return Regex.IsMatch(fullName.Trim(), pattern);
+            if (await _context.Employees.AnyAsync(e => e.Email == dto.Email && e.Id != id))
+                throw new Exception("Email already exists.");
+
+            employee.FullName = dto.FullName;
+            employee.Email = dto.Email;
+            employee.DepartmentId = dto.DepartmentId;
+
+            await _context.SaveChangesAsync();
         }
 
-        private async Task<bool> DepartmentExistsAsync(int departmentId)
+        public async Task DeleteAsync(int id)
         {
-            return await _context.Departments.AnyAsync(d => d.Id == departmentId);
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee == null)
+                throw new Exception("Employee not found.");
+
+            _context.Employees.Remove(employee);
+            await _context.SaveChangesAsync();
         }
     }
 }

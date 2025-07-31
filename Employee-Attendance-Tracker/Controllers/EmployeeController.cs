@@ -1,4 +1,5 @@
-﻿using Employee_Attendance_Tracker.Models.Entities;
+﻿using Employee_Attendance_Tracker.Models;
+using Employee_Attendance_Tracker.Models.Entities;
 using Employee_Attendance_Tracker.Models.ViewModels;
 using Employee_Attendance_Tracker.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -17,219 +18,117 @@ namespace Employee_Attendance_Tracker.Controllers
             _departmentService = departmentService;
         }
 
-        // GET: Employee
         public async Task<IActionResult> Index()
         {
-            var employees = await _employeeService.GetAllEmployeesAsync();
-
-            // Convert Entity to ViewModel with attendance summary
-            var employeeViewModels = new List<EmployeeViewModel>();
-
-            foreach (var employee in employees)
-            {
-                var attendanceSummary = await _employeeService.GetCurrentMonthAttendanceSummaryAsync(employee.Id);
-
-                employeeViewModels.Add(new EmployeeViewModel
-                {
-                    Id = employee.Id,
-                    EmployeeCode = employee.EmployeeCode,
-                    FullName = employee.FullName,
-                    Email = employee.Email,
-                    DepartmentId = employee.DepartmentId,
-                    DepartmentName = employee.Department?.Name,
-                    PresentDays = attendanceSummary.Present,
-                    AbsentDays = attendanceSummary.Absent,
-                    AttendancePercentage = attendanceSummary.Percentage
-                });
-            }
-
-            return View(employeeViewModels);
+            var employees = await _employeeService.GetAllAsync();
+            return View(employees);
         }
 
-        // GET: Employee/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var employee = await _employeeService.GetEmployeeByIdAsync(id);
-            if (employee == null)
-            {
-                return NotFound();
-            }
-
-            var attendanceSummary = await _employeeService.GetCurrentMonthAttendanceSummaryAsync(employee.Id);
-
-            // Convert Entity to ViewModel
-            var viewModel = new EmployeeViewModel
-            {
-                Id = employee.Id,
-                EmployeeCode = employee.EmployeeCode,
-                FullName = employee.FullName,
-                Email = employee.Email,
-                DepartmentId = employee.DepartmentId,
-                DepartmentName = employee.Department?.Name,
-                PresentDays = attendanceSummary.Present,
-                AbsentDays = attendanceSummary.Absent,
-                AttendancePercentage = attendanceSummary.Percentage
-            };
-
-            return View(viewModel);
+            var employee = await _employeeService.GetByIdAsync(id);
+            if (employee == null) return NotFound();
+            return View(employee);
         }
 
-        // GET: Employee/Create
         public async Task<IActionResult> Create()
         {
-            var viewModel = new EmployeeViewModel
-            {
-                Departments = await GetDepartmentSelectListAsync()
-            };
-
-            return View(viewModel);
+            await PopulateDepartmentsDropDownList();
+            return View();
         }
 
-        // POST: Employee/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(EmployeeViewModel viewModel)
+        public async Task<IActionResult> Create(EmployeeDTO dto)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                // Convert ViewModel to Entity
-                var employee = new Employee
-                {
-                    FullName = viewModel.FullName.Trim(),
-                    Email = viewModel.Email.Trim().ToLower(),
-                    DepartmentId = viewModel.DepartmentId
-                };
-
-                var result = await _employeeService.CreateEmployeeAsync(employee);
-                if (result)
-                {
-                    TempData["SuccessMessage"] = "Employee created successfully.";
-                    return RedirectToAction(nameof(Index));
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Failed to create employee. Email might already exist or invalid data provided.");
-                }
+                await PopulateDepartmentsDropDownList(dto.DepartmentId);
+                return View(dto);
             }
 
-            // Reload departments for dropdown
-            viewModel.Departments = await GetDepartmentSelectListAsync();
-            return View(viewModel);
+            try
+            {
+                await _employeeService.AddAsync(dto);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                await PopulateDepartmentsDropDownList(dto.DepartmentId);
+                return View(dto);
+            }
         }
 
-        // GET: Employee/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
-            var employee = await _employeeService.GetEmployeeByIdAsync(id);
-            if (employee == null)
-            {
-                return NotFound();
-            }
+            var employee = await _employeeService.GetByIdAsync(id);
+            if (employee == null) return NotFound();
 
-            // Convert Entity to ViewModel
-            var viewModel = new EmployeeViewModel
+            var dto = new EmployeeDTO
             {
                 Id = employee.Id,
-                EmployeeCode = employee.EmployeeCode,
                 FullName = employee.FullName,
                 Email = employee.Email,
-                DepartmentId = employee.DepartmentId,
-                Departments = await GetDepartmentSelectListAsync()
+                DepartmentId = employee.DepartmentId
             };
 
-            return View(viewModel);
+            await PopulateDepartmentsDropDownList(employee.DepartmentId);
+            return View(dto);
         }
 
-        // POST: Employee/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, EmployeeViewModel viewModel)
+        public async Task<IActionResult> Edit(int id, EmployeeDTO dto)
         {
-            if (id != viewModel.Id)
+            if (id != dto.Id) return BadRequest();
+
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                await PopulateDepartmentsDropDownList(dto.DepartmentId);
+                return View(dto);
             }
 
-            if (ModelState.IsValid)
+            try
             {
-                // Convert ViewModel to Entity
-                var employee = new Employee
-                {
-                    Id = viewModel.Id,
-                    EmployeeCode = viewModel.EmployeeCode,
-                    FullName = viewModel.FullName.Trim(),
-                    Email = viewModel.Email.Trim().ToLower(),
-                    DepartmentId = viewModel.DepartmentId
-                };
-
-                var result = await _employeeService.UpdateEmployeeAsync(employee);
-                if (result)
-                {
-                    TempData["SuccessMessage"] = "Employee updated successfully.";
-                    return RedirectToAction(nameof(Index));
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Failed to update employee. Email might already exist or invalid data provided.");
-                }
+                await _employeeService.UpdateAsync(id, dto);
+                return RedirectToAction(nameof(Index));
             }
-
-            // Reload departments for dropdown
-            viewModel.Departments = await GetDepartmentSelectListAsync();
-            return View(viewModel);
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                await PopulateDepartmentsDropDownList(dto.DepartmentId);
+                return View(dto);
+            }
         }
 
-        // GET: Employee/Delete/5
         public async Task<IActionResult> Delete(int id)
         {
-            var employee = await _employeeService.GetEmployeeByIdAsync(id);
-            if (employee == null)
-            {
-                return NotFound();
-            }
-
-            var attendanceSummary = await _employeeService.GetCurrentMonthAttendanceSummaryAsync(employee.Id);
-
-            // Convert Entity to ViewModel
-            var viewModel = new EmployeeViewModel
-            {
-                Id = employee.Id,
-                EmployeeCode = employee.EmployeeCode,
-                FullName = employee.FullName,
-                Email = employee.Email,
-                DepartmentId = employee.DepartmentId,
-                DepartmentName = employee.Department?.Name,
-                PresentDays = attendanceSummary.Present,
-                AbsentDays = attendanceSummary.Absent,
-                AttendancePercentage = attendanceSummary.Percentage
-            };
-
-            return View(viewModel);
+            var employee = await _employeeService.GetByIdAsync(id);
+            if (employee == null) return NotFound();
+            return View(employee);
         }
 
-        // POST: Employee/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost, ActionName("DeleteConfirmed")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var result = await _employeeService.DeleteEmployeeAsync(id);
-            if (result)
+            try
             {
-                TempData["SuccessMessage"] = "Employee deleted successfully.";
+                await _employeeService.DeleteAsync(id);
+                return RedirectToAction(nameof(Index));
             }
-            else
+            catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Failed to delete employee.";
+                ModelState.AddModelError("", ex.Message);
+                return RedirectToAction(nameof(Delete), new { id });
             }
-
-            return RedirectToAction(nameof(Index));
         }
 
-        // Helper method to get department dropdown list
-        private async Task<SelectList> GetDepartmentSelectListAsync()
+        private async Task PopulateDepartmentsDropDownList(object selectedDepartment = null)
         {
             var departments = await _departmentService.GetAllDepartmentsAsync();
-            return new SelectList(departments, "Id", "Name");
+            ViewBag.Departments = new SelectList(departments, "Id", "Name", selectedDepartment);
         }
     }
 }

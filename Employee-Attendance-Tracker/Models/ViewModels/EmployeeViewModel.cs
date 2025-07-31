@@ -12,8 +12,7 @@ namespace Employee_Attendance_Tracker.Models.ViewModels
 
         [Required]
         [Display(Name = "Full Name")]
-        [RegularExpression(@"^([A-Za-z]{2,}\s){3}[A-Za-z]{2,}$",
-            ErrorMessage = "Full name must contain exactly 4 names, each at least 2 characters")]
+        [RegularExpression(@"^([A-Za-z]{2,}\s){3}[A-Za-z]{2,}$", ErrorMessage = "Full name must contain four names, each at least 2 letters")]
         public string FullName { get; set; }
 
         [Required]
@@ -26,10 +25,10 @@ namespace Employee_Attendance_Tracker.Models.ViewModels
 
         public string DepartmentName { get; set; }
 
-        public int PresentDays { get; set; }
-        public int AbsentDays { get; set; }
-        public decimal AttendancePercentage { get; set; }
-
-        public SelectList Departments { get; set; }
+        // Attendance summary
+        public int Presents { get; set; }
+        public int Absents { get; set; }
+        public double AttendancePercentage => Presents + Absents == 0 ? 0 : Math.Round((double)Presents / (Presents + Absents) * 100, 2);
     }
+
 }

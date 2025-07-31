@@ -144,7 +144,7 @@ namespace Employee_Attendance_Tracker.Controllers
         // Helper methods
         private async Task<SelectList> GetEmployeeSelectListAsync()
         {
-            var employees = await _employeeService.GetAllEmployeesAsync();
+            var employees = await _employeeService.GetAllAsync();
             return new SelectList(employees.Select(e => new { e.Id, DisplayName = $"{e.FullName} ({e.EmployeeCode})" }), "Id", "DisplayName");
         }
 
