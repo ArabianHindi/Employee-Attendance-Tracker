@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Employee_Attendance_Tracker.Models.ViewModels;
 
-namespace Employee_Attendance_Tracker.Controllers;
+namespace Employee_Attendance_Tracker.Presentation.Controllers;
 
 public class HomeController : Controller
 {

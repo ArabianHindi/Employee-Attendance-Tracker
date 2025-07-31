@@ -1,4 +1,4 @@
-﻿namespace Employee_Attendance_Tracker.Models
+﻿namespace Employee_Attendance_Tracker.Models.DTOs
 {
     public class EmployeeDTO
     {

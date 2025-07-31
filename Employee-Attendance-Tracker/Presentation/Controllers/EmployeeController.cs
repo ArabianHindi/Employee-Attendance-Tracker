@@ -1,11 +1,11 @@
-﻿using Employee_Attendance_Tracker.Models;
+﻿using Employee_Attendance_Tracker.Models.DTOs;
 using Employee_Attendance_Tracker.Models.Entities;
 using Employee_Attendance_Tracker.Models.ViewModels;
 using Employee_Attendance_Tracker.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace Employee_Attendance_Tracker.Controllers
+namespace Employee_Attendance_Tracker.Presentation.Controllers
 {
     public class EmployeeController : Controller
     {

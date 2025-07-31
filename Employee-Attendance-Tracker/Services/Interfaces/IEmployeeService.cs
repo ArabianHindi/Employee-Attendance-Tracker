@@ -1,4 +1,4 @@
-﻿using Employee_Attendance_Tracker.Models;
+﻿using Employee_Attendance_Tracker.Models.DTOs;
 using Employee_Attendance_Tracker.Models.Entities;
 using Employee_Attendance_Tracker.Models.ViewModels;
 

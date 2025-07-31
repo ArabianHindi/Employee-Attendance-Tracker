@@ -3,7 +3,7 @@ using Employee_Attendance_Tracker.Models.ViewModels;
 using Employee_Attendance_Tracker.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Employee_Attendance_Tracker.Controllers
+namespace Employee_Attendance_Tracker.Presentation.Controllers
 {
     public class DepartmentController : Controller
     {

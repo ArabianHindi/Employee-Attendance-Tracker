@@ -23,6 +23,14 @@ namespace Employee_Attendance_Tracker
             builder.Services.AddScoped<IEmployeeService, EmployeeService>();
             builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 
+            builder.Services.AddControllersWithViews()
+            .AddRazorOptions(options =>
+            {
+                options.ViewLocationFormats.Add("/Presentation/Views/{1}/{0}.cshtml");
+                options.ViewLocationFormats.Add("/Presentation/Views/Shared/{0}.cshtml");
+            });
+
+
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())
