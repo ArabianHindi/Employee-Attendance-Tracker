@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Employee_Attendance_Tracker.Models.Entities
 {
@@ -15,6 +16,7 @@ namespace Employee_Attendance_Tracker.Models.Entities
         [Required]
         public bool IsPresent { get; set; }
 
-        public virtual Employee Employee { get; set; }
+        [ForeignKey("EmployeeId")]
+        public Employee Employee { get; set; } = null!;
     }
 }

@@ -22,24 +22,21 @@ namespace Employee_Attendance_Tracker.Controllers
             _departmentService = departmentService;
         }
 
-        // GET: Attendance
+        // GET: /Attendance
         public async Task<IActionResult> Index(AttendanceFilterViewModel filter)
         {
-            // Load filter dropdown data
             filter.Departments = await GetDepartmentSelectListAsync();
             filter.Employees = await GetEmployeeSelectListAsync();
 
-            // Get filtered attendances
             var attendances = await _attendanceService.GetFilteredAttendancesAsync(
                 filter.DepartmentId, filter.EmployeeId, filter.StartDate, filter.EndDate);
 
-            // Convert to ViewModels
             filter.FilteredAttendances = attendances.Select(a => new AttendanceViewModel
             {
                 Id = a.Id,
                 EmployeeId = a.EmployeeId,
                 EmployeeName = a.Employee.FullName,
-                DepartmentName = a.Employee.Department.Name,
+                DepartmentName = a.Employee.Department?.Name,
                 Date = a.Date,
                 IsPresent = a.IsPresent
             }).ToList();
@@ -47,7 +44,7 @@ namespace Employee_Attendance_Tracker.Controllers
             return View(filter);
         }
 
-        // GET: Attendance/Create
+        // GET: /Attendance/Create
         public async Task<IActionResult> Create()
         {
             var viewModel = new AttendanceViewModel
@@ -59,7 +56,7 @@ namespace Employee_Attendance_Tracker.Controllers
             return View(viewModel);
         }
 
-        // POST: Attendance/Create
+        // POST: /Attendance/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AttendanceViewModel viewModel)
@@ -79,17 +76,75 @@ namespace Employee_Attendance_Tracker.Controllers
                     TempData["SuccessMessage"] = "Attendance marked successfully.";
                     return RedirectToAction(nameof(Index));
                 }
-                else
-                {
-                    ModelState.AddModelError("", "Failed to mark attendance. Attendance may already exist for this date or date is invalid.");
-                }
+
+                ModelState.AddModelError("", "Failed to mark attendance. It may already exist or the date is invalid.");
             }
 
             viewModel.Employees = await GetEmployeeSelectListAsync();
             return View(viewModel);
         }
 
-        // AJAX method for dynamic attendance status
+        // GET: /Attendance/Edit/5
+        public async Task<IActionResult> Edit(int id)
+        {
+            var attendance = await _attendanceService.GetAttendanceByIdAsync(id);
+            if (attendance == null) return NotFound();
+
+            var viewModel = new AttendanceViewModel
+            {
+                Id = attendance.Id,
+                EmployeeId = attendance.EmployeeId,
+                Date = attendance.Date,
+                IsPresent = attendance.IsPresent,
+                Employees = await GetEmployeeSelectListAsync()
+            };
+
+            return View(viewModel);
+        }
+
+        // POST: /Attendance/Edit
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(AttendanceViewModel viewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var attendance = new Attendance
+                {
+                    Id = viewModel.Id,
+                    EmployeeId = viewModel.EmployeeId,
+                    Date = viewModel.Date,
+                    IsPresent = viewModel.IsPresent
+                };
+
+                var result = await _attendanceService.UpdateAttendanceAsync(attendance);
+                if (result)
+                {
+                    TempData["SuccessMessage"] = "Attendance updated successfully.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                ModelState.AddModelError("", "Failed to update attendance.");
+            }
+
+            viewModel.Employees = await GetEmployeeSelectListAsync();
+            return View(viewModel);
+        }
+
+        // POST: /Attendance/Delete/5
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _attendanceService.DeleteAttendanceAsync(id);
+            if (result)
+                TempData["SuccessMessage"] = "Attendance deleted successfully.";
+            else
+                TempData["ErrorMessage"] = "Failed to delete attendance.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: /Attendance/GetAttendanceStatus?employeeId=1&date=2025-07-31
         [HttpGet]
         public async Task<IActionResult> GetAttendanceStatus(int employeeId, string date)
         {
@@ -97,51 +152,47 @@ namespace Employee_Attendance_Tracker.Controllers
             {
                 var status = await _attendanceService.GetAttendanceStatusAsync(employeeId, parsedDate);
                 var canMark = await _attendanceService.CanMarkAttendanceForDateAsync(parsedDate);
-
                 return Json(new { status, canMark });
             }
 
             return Json(new { status = "Error", canMark = false });
         }
 
-        // AJAX method for updating attendance
+        // POST: /Attendance/UpdateAttendanceStatus
         [HttpPost]
         public async Task<IActionResult> UpdateAttendanceStatus(int employeeId, string date, bool isPresent)
         {
-            if (DateTime.TryParse(date, out DateTime parsedDate))
+            if (!DateTime.TryParse(date, out DateTime parsedDate))
+                return Json(new { success = false, message = "Invalid date" });
+
+            var existing = await _attendanceService.GetAttendanceByEmployeeAndDateAsync(employeeId, parsedDate);
+
+            bool result;
+            if (existing == null)
             {
-                var existingAttendance = await _attendanceService.GetAttendanceByEmployeeAndDateAsync(employeeId, parsedDate);
+                var newAttendance = new Attendance
+                {
+                    EmployeeId = employeeId,
+                    Date = parsedDate,
+                    IsPresent = isPresent
+                };
+                result = await _attendanceService.CreateAttendanceAsync(newAttendance);
+            }
+            else
+            {
+                existing.IsPresent = isPresent;
+                result = await _attendanceService.UpdateAttendanceAsync(existing);
+            }
 
-                bool result;
-                if (existingAttendance == null)
-                {
-                    // Create new attendance
-                    var newAttendance = new Attendance
-                    {
-                        EmployeeId = employeeId,
-                        Date = parsedDate,
-                        IsPresent = isPresent
-                    };
-                    result = await _attendanceService.CreateAttendanceAsync(newAttendance);
-                }
-                else
-                {
-                    // Update existing attendance
-                    existingAttendance.IsPresent = isPresent;
-                    result = await _attendanceService.UpdateAttendanceAsync(existingAttendance);
-                }
-
-                if (result)
-                {
-                    var status = isPresent ? "Present" : "Absent";
-                    return Json(new { success = true, status });
-                }
+            if (result)
+            {
+                return Json(new { success = true, status = isPresent ? "Present" : "Absent" });
             }
 
             return Json(new { success = false, message = "Failed to update attendance" });
         }
 
-        // Helper methods
+        // Helpers
         private async Task<SelectList> GetEmployeeSelectListAsync()
         {
             var employees = await _employeeService.GetAllAsync();
